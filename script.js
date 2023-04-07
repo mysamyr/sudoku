@@ -1,4 +1,5 @@
 import { Sudoku } from "./sudoku.js";
+import { generateBoard } from "./board-generator.js";
 import {
   BOX_SIZE,
   GRID_SIZE,
@@ -6,17 +7,38 @@ import {
   convertPositionToIndex,
 } from "./util.js";
 
-const sudoku = new Sudoku();
+let sudoku;
+let mistakes = 0;
+let timer;
+let timerInterval;
 let cells;
 let selectedCellIndex;
 let selectedCell;
 init();
 
 function init() {
+  const diffBtns = document.querySelectorAll(".diff-select-btn");
+
+  diffBtns.forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const difficulty = e.target.dataset.diff;
+      sudoku = new Sudoku(difficulty);
+
+      document.querySelector(".welcome").remove();
+
+      generateBoard(difficulty, mistakes);
+      timer = Date.now();
+      start();
+    });
+  });
+}
+
+function start() {
   initCells();
   initNumbers();
   initRemover();
   initKeyEvent();
+  initTimerEvent();
 }
 
 function initCells() {
@@ -137,6 +159,8 @@ function setValueInSelectedCell(value) {
 
   if (duplicatesPositions.length) {
     highlightDuplicates(duplicatesPositions);
+    mistakes++;
+    document.querySelector(".status-mistakes").innerHTML = mistakes;
     return;
   }
   sudoku.grid[row][column] = value;
@@ -184,23 +208,42 @@ function initKeyEvent() {
   });
 }
 
+function initTimerEvent() {
+  timerInterval = setInterval(() => {
+    const now = Date.now();
+    document.querySelector(".status-time").innerHTML = getTimer(now);
+  }, 1000);
+}
+
+function getTimer(now) {
+  const differenceInSec = Math.floor((now - timer) / 1000);
+  const minutes = Math.floor(differenceInSec / 60);
+  const seconds = differenceInSec - minutes * 60;
+
+  return `${minutes < 10 ? "0" + minutes : minutes}:${
+    seconds < 10 ? "0" + seconds : seconds
+  }`;
+}
+
 function winAnimation() {
+  const timeSpent = getTimer(Date.now());
+  clearInterval(timerInterval);
   cells.forEach((cell) =>
-    cell.classList.remove(
-      "error",
-      "shake",
-      "zoom",
-      "selected",
-      "filled",
-      "highlighted"
-    )
+    cell.classList.remove("error", "shake", "zoom", "selected", "highlighted")
   );
-  cells.forEach((cell, i) => {
-    setTimeout(() => cell.classList.add("highlighted", "zoom"), i * 15);
-  });
+  cells.forEach((cell, i) =>
+    setTimeout(() => cell.classList.add("highlighted", "zoom"), i * 15)
+  );
   // for (let i = 0; i < 10; i++) {
-  //     setTimeout(() => cells.forEach(cell => cell.classList.toggle("highlighted")), 500 + cells.length*15 + 300*i);
+  //   setTimeout(
+  //     () => cells.forEach((cell) => cell.classList.toggle("highlighted")),
+  //     500 + cells.length * 15 + 300 * i
+  //   );
   // }
+  setTimeout(() => {
+    const msg = `You win, made ${mistakes} mistakes and spent ${timeSpent}! Press OK to start new game`;
+    if (confirm(msg)) location.reload();
+  }, 500 + cells.length * 15);
 }
 
 function deselect() {

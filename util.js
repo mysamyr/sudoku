@@ -1,5 +1,25 @@
 export const GRID_SIZE = 9;
 export const BOX_SIZE = 3;
+export const NUMBERS_CNT = 10;
+
+export const DIFFICULTIES = {
+  1: {
+    name: "TEST",
+    count: 1,
+  },
+  2: {
+    name: "EASY",
+    count: 43,
+  },
+  3: {
+    name: "MEDIUM",
+    count: 49,
+  },
+  4: {
+    name: "HARD",
+    count: 53,
+  },
+};
 
 export function convertIndexToPosition(idx) {
   return {
